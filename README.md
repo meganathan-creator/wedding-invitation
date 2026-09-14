@@ -84,7 +84,6 @@ Vercel settings:
 Set environment variable in Vercel project settings:
 
 - `RSVP_ADMIN_TOKEN` = your secret admin key
-- `VITE_SITE_URL` = your public site URL (example: `https://wedding-invitation.vercel.app` or custom domain)
 
 ## RSVP storage and admin access
 
