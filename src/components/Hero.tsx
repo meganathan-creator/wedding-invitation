@@ -8,6 +8,10 @@ export function Hero({ config }: { config: WeddingConfig }) {
   const scale = useTransform(scrollY, [0, 900], [1.03, 1.14]);
   const opacity = useTransform(scrollY, [0, 500], [1, 0.15]);
   const { bride, groom } = config.couple;
+  const heroEvent =
+    config.events.find((event) => event.countdownDate) ??
+    config.events.find((event) => /wedding/i.test(event.type)) ??
+    config.events[0];
 
   return (
     <section className="hero">
@@ -35,9 +39,9 @@ export function Hero({ config }: { config: WeddingConfig }) {
         <p className="hero-kicker">{config.invitation.eyebrow}</p>
 
         <div className="hero-date-mark">
-          <span>{config.events[0]?.dateLabel?.split(" ")[1] ?? ""}</span>
-          <strong>{config.events[0]?.dateLabel?.match(/\b\d{1,2}\b/)?.[0] ?? "—"}</strong>
-          <span>{config.events[0]?.dateLabel?.split(" ").slice(-1)[0] ?? ""}</span>
+          <span>{heroEvent?.dateLabel?.split(" ")[1] ?? ""}</span>
+          <strong>{heroEvent?.dateLabel?.match(/\b\d{1,2}\b/)?.[0] ?? "—"}</strong>
+          <span>{heroEvent?.dateLabel?.split(" ").slice(-1)[0] ?? ""}</span>
         </div>
 
         <div className="hero-names">
