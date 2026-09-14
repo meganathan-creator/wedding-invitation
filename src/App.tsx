@@ -7,8 +7,86 @@ import { Gallery } from "./components/Gallery";
 import { RSVP } from "./components/RSVP";
 import "./styles.css";
 
+function formatGoogleDate(value: Date) {
+  return value.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+}
+
+function escapeIcsText(value: string) {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;")
+    .replace(/\n/g, "\\n");
+}
+
+function parseEventStart(event: WeddingConfig["events"][number]) {
+  if (event.startDateTime) {
+    const start = new Date(event.startDateTime);
+    if (!Number.isNaN(start.getTime())) return start;
+  }
+
+  if (event.countdownDate) {
+    const start = new Date(event.countdownDate);
+    if (!Number.isNaN(start.getTime())) return start;
+  }
+
+  const timeMatch = event.time.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i);
+  const date = new Date(event.dateLabel);
+  if (Number.isNaN(date.getTime())) return null;
+
+  if (!timeMatch) {
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  const hour12 = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2] ?? "0");
+  const meridiem = timeMatch[3].toUpperCase();
+  const hour24 = (hour12 % 12) + (meridiem === "PM" ? 12 : 0);
+  date.setHours(hour24, minute, 0, 0);
+  return date;
+}
+
+function getCalendarLinks(event: WeddingConfig["events"][number], coupleNames: string) {
+  const start = parseEventStart(event);
+  if (!start) return null;
+
+  const end = event.endDateTime
+    ? new Date(event.endDateTime)
+    : new Date(start.getTime() + 2 * 60 * 60 * 1000);
+
+  if (Number.isNaN(end.getTime())) return null;
+
+  const title = event.calendarTitle ?? `${event.type} - ${coupleNames}`;
+  const location = [event.venue, event.address].filter(Boolean).join(", ");
+  const details = event.calendarDescription ?? "Wedding celebration";
+
+  const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatGoogleDate(start)}/${formatGoogleDate(end)}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(location)}`;
+
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "CALSCALE:GREGORIAN",
+    "PRODID:-//Wedding Invitation//EN",
+    "BEGIN:VEVENT",
+    `UID:${event.id}-${start.getTime()}@wedding-invitation`,
+    `DTSTAMP:${formatGoogleDate(new Date())}`,
+    `DTSTART:${formatGoogleDate(start)}`,
+    `DTEND:${formatGoogleDate(end)}`,
+    `SUMMARY:${escapeIcsText(title)}`,
+    `DESCRIPTION:${escapeIcsText(details)}`,
+    `LOCATION:${escapeIcsText(location)}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const icsUrl = `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`;
+  return { googleUrl, icsUrl };
+}
+
 export default function App({ config }: { config: WeddingConfig }) {
   const { bride, groom } = config.couple;
+  const coupleNames = `${bride.name} & ${groom.name}`;
   const primaryEvent =
     config.events.find((event) => event.countdownDate) ??
     config.events.find((event) => event.venue) ??
@@ -27,6 +105,9 @@ export default function App({ config }: { config: WeddingConfig }) {
   const hasSingleSharedLocation = uniqueLocationKeys.size === 1 && eventLocations.length > 0;
   const shouldShowLocationPerEvent = uniqueLocationKeys.size > 1;
   const sharedLocation = hasSingleSharedLocation ? eventLocations[0] : null;
+  const sharedLocationEvent = hasSingleSharedLocation
+    ? config.events.find((event) => event.venue || event.address || event.mapUrl)
+    : null;
 
   return (
     <main className="site-shell">
@@ -100,6 +181,9 @@ export default function App({ config }: { config: WeddingConfig }) {
 
           <div className="event-stack">
             {config.events.map((event, index) => (
+              (() => {
+                const calendar = getCalendarLinks(event, coupleNames);
+                return (
               <motion.article
                 className={`event-card ${index === 0 ? "event-card-main" : ""}`}
                 key={event.id}
@@ -115,6 +199,32 @@ export default function App({ config }: { config: WeddingConfig }) {
                   <p className="event-time">{event.time}</p>
                   {shouldShowLocationPerEvent && event.venue && <p className="event-venue">{event.venue}</p>}
                   {shouldShowLocationPerEvent && event.address && <p className="event-address">{event.address}</p>}
+                  {(event.venueImage || event.mapEmbedUrl) && shouldShowLocationPerEvent && (
+                    <div className="event-venue-visual">
+                      {event.venueImage && (
+                        <img
+                          src={event.venueImage}
+                          alt={event.venueImageAlt ?? `${event.type} venue`}
+                          loading="lazy"
+                        />
+                      )}
+                      {event.mapEmbedUrl && (
+                        <iframe
+                          src={event.mapEmbedUrl}
+                          title={`${event.type} map`}
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          allowFullScreen
+                        />
+                      )}
+                    </div>
+                  )}
+                  {calendar && (
+                    <div className="calendar-actions">
+                      <a href={calendar.googleUrl} target="_blank" rel="noreferrer">ADD TO GOOGLE</a>
+                      <a href={calendar.icsUrl} download={`${event.id}.ics`}>ADD TO APPLE/OUTLOOK</a>
+                    </div>
+                  )}
                 </div>
                 {shouldShowLocationPerEvent && event.mapUrl && (
                   <a
@@ -127,6 +237,8 @@ export default function App({ config }: { config: WeddingConfig }) {
                   </a>
                 )}
               </motion.article>
+                );
+              })()
             ))}
           </div>
 
@@ -144,6 +256,26 @@ export default function App({ config }: { config: WeddingConfig }) {
                 >
                   {sharedLocation.mapLabel ?? "OPEN MAP"} <span>↗</span>
                 </a>
+              )}
+              {(sharedLocationEvent?.venueImage || sharedLocationEvent?.mapEmbedUrl) && (
+                <div className="event-venue-visual shared-venue-visual">
+                  {sharedLocationEvent.venueImage && (
+                    <img
+                      src={sharedLocationEvent.venueImage}
+                      alt={sharedLocationEvent.venueImageAlt ?? "Wedding venue"}
+                      loading="lazy"
+                    />
+                  )}
+                  {sharedLocationEvent.mapEmbedUrl && (
+                    <iframe
+                      src={sharedLocationEvent.mapEmbedUrl}
+                      title="Wedding venue map"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      allowFullScreen
+                    />
+                  )}
+                </div>
               )}
             </Reveal>
           )}

@@ -12,6 +12,17 @@ export function Hero({ config }: { config: WeddingConfig }) {
     config.events.find((event) => event.countdownDate) ??
     config.events.find((event) => /wedding/i.test(event.type)) ??
     config.events[0];
+  const totalSections =
+    config.hero.pageCount ??
+    (
+      1 + // hero
+      1 + // invitation
+      1 + // celebration
+      (heroEvent?.countdownDate ? 1 : 0) +
+      (config.gallery.photos.length ? 1 : 0) +
+      (config.rsvp.enabled ? 1 : 0) +
+      1 // footer
+    );
 
   return (
     <section className="hero">
@@ -29,7 +40,7 @@ export function Hero({ config }: { config: WeddingConfig }) {
       />
 
       <div className="hero-top">
-        <span className="hero-index">01 / 05</span>
+        <span className="hero-index">01 / {String(totalSections).padStart(2, "0")}</span>
         {config.music.enabled && config.hero.showMusicButton !== false && (
           <MusicButton file={config.music.file} label={config.music.label} />
         )}

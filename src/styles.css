@@ -464,6 +464,44 @@ h2 i { color: var(--gold); }
 
 .map-link span { margin-left: 8px; }
 
+.calendar-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.calendar-actions a {
+  border: 1px solid rgba(226,207,154,.35);
+  color: var(--gold-soft);
+  padding: 6px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.event-venue-visual {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.event-venue-visual img,
+.event-venue-visual iframe {
+  width: 100%;
+  min-height: 180px;
+  border: 0;
+  display: block;
+  object-fit: cover;
+  background: rgba(255,255,255,.08);
+}
+
+.shared-venue-visual {
+  max-width: 520px;
+  margin: 14px auto 0;
+}
+
 .shared-location-block {
   margin-top: 18px;
   padding: 25px;
@@ -532,6 +570,26 @@ h2 i { color: var(--gold); }
   color: var(--gold-soft);
   font-size: 9px;
   letter-spacing: .2em;
+}
+
+.countdown-finished {
+  max-width: 560px;
+  margin: 70px auto 0;
+  padding: 30px 20px;
+  border: 1px solid rgba(255,255,255,.25);
+}
+
+.countdown-finished h3 {
+  margin: 0;
+  font: 400 clamp(36px, 9vw, 58px)/1 var(--serif);
+}
+
+.countdown-finished p {
+  margin: 10px 0 0;
+  color: var(--gold-soft);
+  font-size: 13px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 .gallery-section {

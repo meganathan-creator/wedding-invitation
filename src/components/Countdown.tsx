@@ -2,13 +2,17 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 
 function getTime(target: string) {
-  const diff = Math.max(0, new Date(target).getTime() - Date.now());
-  return [
-    ["DAYS", Math.floor(diff / 86400000)],
-    ["HOURS", Math.floor(diff / 3600000) % 24],
-    ["MIN", Math.floor(diff / 60000) % 60],
-    ["SEC", Math.floor(diff / 1000) % 60]
-  ] as const;
+  const diff = new Date(target).getTime() - Date.now();
+  const safeDiff = Math.max(0, diff);
+  return {
+    isPast: diff <= 0,
+    values: [
+      ["DAYS", Math.floor(safeDiff / 86400000)],
+      ["HOURS", Math.floor(safeDiff / 3600000) % 24],
+      ["MIN", Math.floor(safeDiff / 60000) % 60],
+      ["SEC", Math.floor(safeDiff / 1000) % 60]
+    ] as const,
+  };
 }
 
 export function Countdown({ target }: { target?: string }) {
@@ -20,9 +24,23 @@ export function Countdown({ target }: { target?: string }) {
     return () => window.clearInterval(timer);
   }, [target]);
 
+  if (time.isPast) {
+    return (
+      <motion.div
+        className="countdown-finished"
+        initial={{ opacity: 0, y: 8 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+      >
+        <h3>We are married.</h3>
+        <p>Thank you for your love, blessings, and presence.</p>
+      </motion.div>
+    );
+  }
+
   return (
     <div className="countdown-grid">
-      {time.map(([label, value], index) => (
+      {time.values.map(([label, value], index) => (
         <motion.div
           className="countdown-cell"
           key={label}

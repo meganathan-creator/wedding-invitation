@@ -5,6 +5,22 @@ import { Reveal } from "./Reveal";
 export function Gallery({ gallery }: { gallery: WeddingConfig["gallery"] }) {
   if (!gallery.photos.length) return null;
 
+  const photos = gallery.photos.map((photo, index) => {
+    if (typeof photo === "string") {
+      return {
+        src: photo,
+        alt: `Wedding moment ${index + 1}`,
+        caption: String(index + 1).padStart(2, "0"),
+      };
+    }
+
+    return {
+      src: photo.src,
+      alt: photo.alt?.trim() || `Wedding moment ${index + 1}`,
+      caption: photo.caption?.trim() || String(index + 1).padStart(2, "0"),
+    };
+  });
+
   return (
     <section className="gallery-section">
       <div className="container">
@@ -17,23 +33,23 @@ export function Gallery({ gallery }: { gallery: WeddingConfig["gallery"] }) {
         </Reveal>
 
         <div className="gallery-wall">
-          {gallery.photos.map((photo, index) => (
+          {photos.map((photo, index) => (
             <motion.figure
-              key={`${photo}-${index}`}
+              key={`${photo.src}-${index}`}
               className={`gallery-item gallery-item-${index + 1}`}
               whileHover={{ scale: 1.025 }}
               transition={{ duration: 0.35 }}
             >
               <img
-                src={photo}
-                alt={`Wedding moment ${index + 1}`}
+                src={photo.src}
+                alt={photo.alt}
                 loading="lazy"
                 onError={(event) => {
                   event.currentTarget.style.display = "none";
                   event.currentTarget.parentElement?.classList.add("gallery-missing");
                 }}
               />
-              <figcaption>{String(index + 1).padStart(2, "0")}</figcaption>
+              <figcaption>{photo.caption}</figcaption>
             </motion.figure>
           ))}
         </div>

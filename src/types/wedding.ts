@@ -10,12 +10,27 @@ export type WeddingEvent = {
   type: string;
   dateLabel: string;
   countdownDate?: string;
+  startDateTime?: string;
+  endDateTime?: string;
   time: string;
   venue?: string;
   address?: string;
   mapUrl?: string;
   mapLabel?: string;
+  mapEmbedUrl?: string;
+  venueImage?: string;
+  venueImageAlt?: string;
+  calendarTitle?: string;
+  calendarDescription?: string;
 };
+
+export type GalleryPhoto =
+  | string
+  | {
+      src: string;
+      alt?: string;
+      caption?: string;
+    };
 
 export type WeddingConfig = {
   couple: {
@@ -32,11 +47,12 @@ export type WeddingConfig = {
     image: string;
     overlay?: number;
     showMusicButton?: boolean;
+    pageCount?: number;
   };
   gallery: {
     title: string;
     subtitle: string;
-    photos: string[];
+    photos: GalleryPhoto[];
   };
   music: {
     enabled: boolean;
