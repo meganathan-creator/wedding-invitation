@@ -14,7 +14,6 @@ type RSVPResponsePayload = {
 type RSVPResponse = RSVPResponsePayload & {
   id: string;
   createdAt: string;
-  forWhom?: "bride" | "groom";
 };
 
 export function RSVP({

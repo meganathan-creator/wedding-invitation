@@ -1,6 +1,7 @@
 /// <reference types="node" />
 
 import { promises as fs } from "node:fs";
+import { timingSafeEqual } from "node:crypto";
 import path from "node:path";
 
 type RSVPEntry = {
@@ -25,6 +26,7 @@ const submitCooldownMs = 15000;
 
 let inMemoryResponses: RSVPEntry[] | null = null;
 const lastSubmitByIp = new Map<string, number>();
+const lastAdminCheckByIp = new Map<string, number>();
 
 function parseJsonSafely(value: string): RSVPEntry[] {
   try {
@@ -70,8 +72,38 @@ function getClientIp(req: any): string {
   return String(req.socket?.remoteAddress ?? "unknown");
 }
 
+function isRateLimited(ip: string, tracker: Map<string, number>, cooldownMs: number): boolean {
+  const now = Date.now();
+  const lastAttemptAt = tracker.get(ip) ?? 0;
+  if (now - lastAttemptAt < cooldownMs) {
+    return true;
+  }
+  tracker.set(ip, now);
+  return false;
+}
+
+function tokensMatchTimingSafe(requestToken: string, adminToken: string): boolean {
+  const requestBuffer = Buffer.from(requestToken);
+  const adminBuffer = Buffer.from(adminToken);
+  const compareLength = Math.max(requestBuffer.length, adminBuffer.length, 1);
+
+  const paddedRequest = Buffer.alloc(compareLength);
+  const paddedAdmin = Buffer.alloc(compareLength);
+  requestBuffer.copy(paddedRequest);
+  adminBuffer.copy(paddedAdmin);
+
+  const equal = timingSafeEqual(paddedRequest, paddedAdmin);
+  return equal && requestBuffer.length === adminBuffer.length;
+}
+
 export default async function handler(req: any, res: any): Promise<void> {
   if (req.method === "GET") {
+    const clientIp = getClientIp(req);
+    if (isRateLimited(clientIp, lastAdminCheckByIp, submitCooldownMs)) {
+      sendJson(res, 429, { error: "Please wait a few seconds before trying again." });
+      return;
+    }
+
     const adminToken = (process.env.RSVP_ADMIN_TOKEN ?? "").trim();
     if (!adminToken) {
       sendJson(res, 503, { error: "RSVP admin token is not configured." });
@@ -79,7 +111,7 @@ export default async function handler(req: any, res: any): Promise<void> {
     }
 
     const requestToken = String(req.headers["x-rsvp-admin-token"] ?? "").trim();
-    if (requestToken !== adminToken) {
+    if (!tokensMatchTimingSafe(requestToken, adminToken)) {
       sendJson(res, 401, { error: "Unauthorized." });
       return;
     }
@@ -99,9 +131,7 @@ export default async function handler(req: any, res: any): Promise<void> {
     }
 
     const clientIp = getClientIp(req);
-    const now = Date.now();
-    const lastSubmitAt = lastSubmitByIp.get(clientIp) ?? 0;
-    if (now - lastSubmitAt < submitCooldownMs) {
+    if (isRateLimited(clientIp, lastSubmitByIp, submitCooldownMs)) {
       sendJson(res, 429, { error: "Please wait a few seconds before submitting again." });
       return;
     }
@@ -143,7 +173,6 @@ export default async function handler(req: any, res: any): Promise<void> {
     const responses = await readResponses();
     responses.push(newEntry);
     await writeResponses(responses);
-    lastSubmitByIp.set(clientIp, now);
 
     sendJson(res, 201, { ok: true, id: newEntry.id });
     return;
