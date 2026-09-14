@@ -585,6 +585,15 @@ h2 i { color: var(--gold); }
   gap: 22px;
 }
 
+.rsvp-honeypot {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
 .rsvp-form label {
   color: #5B5359;
   font-size: 11px;

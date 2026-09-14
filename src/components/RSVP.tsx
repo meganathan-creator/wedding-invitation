@@ -8,6 +8,7 @@ type RSVPResponsePayload = {
   attendance: string;
   guests: number;
   message: string;
+  website?: string;
 };
 
 type RSVPResponse = RSVPResponsePayload & {
@@ -46,6 +47,7 @@ export function RSVP({
       attendance: String(form.get("attendance") ?? ""),
       guests: Number(form.get("guests") ?? 1),
       message: String(form.get("message") ?? "").trim(),
+      website: String(form.get("website") ?? "").trim(),
     };
 
     try {
@@ -128,6 +130,18 @@ export function RSVP({
           </motion.div>
         ) : (
           <form className="rsvp-form" onSubmit={submit}>
+            <div className="rsvp-honeypot" aria-hidden="true">
+              <label htmlFor="website-field">Website</label>
+              <input
+                id="website-field"
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                defaultValue=""
+              />
+            </div>
+
             <label>
               Your name
               <input required name="name" placeholder="Enter your name" />

@@ -84,6 +84,7 @@ Vercel settings:
 Set environment variable in Vercel project settings:
 
 - `RSVP_ADMIN_TOKEN` = your secret admin key
+- `VITE_SITE_URL` = your public site URL (example: `https://wedding-invitation.vercel.app` or custom domain)
 
 ## RSVP storage and admin access
 
@@ -112,6 +113,26 @@ http://localhost:5173/?admin=1
 3. In the RSVP section, enter the same admin key and click VIEW RESPONSES.
 
 Guests can submit RSVP normally, but cannot view responses without the admin token.
+
+## Custom domain setup (Vercel)
+
+1. Open Vercel dashboard and select your project.
+2. Go to Settings -> Domains.
+3. Add your domain (example: invite.yourdomain.com).
+4. In your domain provider DNS, add the records Vercel shows.
+5. Wait for DNS verification to complete in Vercel.
+6. Mark the new domain as Primary.
+
+After domain is active, update social meta URLs in [index.html](index.html) if you want fully qualified image links for some messaging apps.
+
+## Basic RSVP anti-spam
+
+Current RSVP endpoint includes:
+- hidden honeypot field to catch simple bots
+- per-IP cooldown (15 seconds) between submissions
+- input validation for name, guests and message length
+
+This is suitable for draft sharing. For stronger production protection, add CAPTCHA and persistent database storage.
 
 
 ## High-contrast palette
