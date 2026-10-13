@@ -70,8 +70,9 @@ h2 i { color: var(--terracotta); }
 
 .hero {
   position: relative;
-  height: 100svh;
-  min-height: 700px;
+  height: 100vh;   /* fallback for older browsers */
+  height: 100svh;  /* visible area with mobile browser toolbars showing */
+  min-height: 640px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -83,7 +84,7 @@ h2 i { color: var(--terracotta); }
 .hero-image {
   position: absolute;
   inset: -7%;
-  background-position: center 22%; /* keep faces in the upper half */
+  background-position: center 40%;
   background-size: cover;
   will-change: transform;
 }
@@ -91,13 +92,14 @@ h2 i { color: var(--terracotta); }
 .hero-overlay {
   position: absolute;
   inset: 0;
-  /* Clear over the faces, deepening into the dark lower half where the text sits */
+  /* Keep the photo warm and bright overall: only a light wash at the edges.
+     The heavy lifting is done by the scrim behind the text (.hero-copy::before). */
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--ink) 18%, transparent) 0%,
-    color-mix(in srgb, var(--ink) 6%, transparent) 30%,
-    color-mix(in srgb, var(--ink) 70%, transparent) 62%,
-    color-mix(in srgb, var(--ink) 92%, transparent) 100%
+    color-mix(in srgb, var(--ink) 22%, transparent) 0%,
+    transparent 22%,
+    transparent 50%,
+    color-mix(in srgb, var(--ink) 40%, transparent) 100%
   );
 }
 
@@ -175,23 +177,40 @@ h2 i { color: var(--terracotta); }
 .hero-copy {
   position: relative;
   z-index: 2;
+  isolation: isolate;
   width: min(90%, 650px);
   margin-bottom: 118px; /* room for the scroll cue */
   text-align: center;
 }
 
+/* Soft, borderless dark pool behind the text only — fades out to the untouched photo */
+.hero-copy::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -30% -28%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--ink) 80%, transparent) 0%,
+    color-mix(in srgb, var(--ink) 70%, transparent) 55%,
+    color-mix(in srgb, var(--ink) 38%, transparent) 80%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
 .hero-kicker {
-  margin: 0 0 22px;
+  margin: 0 0 30px;
   color: var(--gold-soft);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: .34em;
-  text-shadow: 0 1px 10px rgba(0,0,0,.38);
+  text-shadow: 0 1px 10px rgba(0,0,0,.5);
 }
 
 .hero-date-mark {
   width: fit-content;
-  margin: 0 auto 26px;
+  margin: 0 auto 44px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -214,7 +233,7 @@ h2 i { color: var(--terracotta); }
 }
 
 .hero-names {
-  font: 400 clamp(42px, 8vw, 84px)/0.98 var(--serif);
+  font: 400 clamp(36px, 7vw, 72px)/1.06 var(--serif);
   letter-spacing: -0.035em;
   overflow-wrap: anywhere;
   text-shadow: 0 2px 16px rgba(0,0,0,.48);
@@ -222,17 +241,17 @@ h2 i { color: var(--terracotta); }
 
 .hero-names span {
   display: block;
-  margin: 12px 0;
+  margin: 16px 0;
   color: var(--gold-soft);
   font: 400 22px var(--serif);
 }
 
 .hero-subtitle {
-  margin: 38px 0 0;
-  color: color-mix(in srgb, var(--white) 72%, transparent);
+  margin: 44px 0 0;
+  color: color-mix(in srgb, var(--white) 82%, transparent);
   font-size: 11px;
   letter-spacing: .27em;
-  text-shadow: 0 1px 8px rgba(0,0,0,.34);
+  text-shadow: 0 1px 8px rgba(0,0,0,.5);
 }
 
 .hero-scroll {
@@ -250,6 +269,7 @@ h2 i { color: var(--terracotta); }
   gap: 9px;
   font-size: 11px;
   letter-spacing: .2em;
+  white-space: nowrap;
 }
 
 .hero-scroll i {
@@ -674,23 +694,26 @@ h2 i { color: var(--terracotta); }
   letter-spacing: -.01em;
 }
 
-/* Two photos: a matched diptych, the second frame dropped for rhythm */
-.gallery-wall.is-pair {
+/* Two or more photos: two columns of matched portrait prints, right column dropped */
+.gallery-wall.is-columns {
   grid-template-columns: 1fr 1fr;
   gap: 18px;
   align-items: start;
 }
-.is-pair .gallery-frame { aspect-ratio: 3 / 4; }
-.is-pair .gallery-frame {
+.gallery-col { display: grid; gap: 34px; min-width: 0; }
+.gallery-col-2 { padding-top: 56px; }
+.is-columns .gallery-frame {
+  width: 100%;
+  height: auto; /* size from width via aspect-ratio, not from the column height */
+  aspect-ratio: 3 / 4;
   border-radius: 2px;
   box-shadow: 0 18px 40px color-mix(in srgb, var(--ink) 12%, transparent);
 }
-.is-pair .gallery-item-2 { margin-top: 56px; }
-.is-pair .gallery-item-2 figcaption { justify-content: flex-end; }
+.gallery-col-2 figcaption { justify-content: flex-end; }
 
 /* One photo: a single centred print */
 .gallery-wall.is-single { max-width: 420px; margin-inline: auto; }
-.is-single .gallery-frame { aspect-ratio: 4 / 5; }
+.is-single .gallery-frame { width: 100%; height: auto; aspect-ratio: 4 / 5; }
 
 /* Three or more: editorial wall with overlaid captions */
 .gallery-wall.is-wall {
@@ -965,18 +988,21 @@ h2 i { color: var(--terracotta); }
   .container { width: min(calc(100% - 38px), 650px); }
   .hero::after { inset: 13px; }
   .hero-top { top: 25px; left: 25px; right: 25px; }
-  .hero { min-height: 650px; }
+  .hero { min-height: 520px; } /* never taller than a small phone's visible area */
   .hero-copy { margin-bottom: 104px; }
+  .hero-copy::before { inset: -26% -20%; }
+  .hero-date-mark { margin-bottom: 36px; }
   .hero-date-mark strong { font-size: 44px; }
   .hero-names {
-    font-size: clamp(34px, 10vw, 52px);
-    line-height: 1;
-    letter-spacing: -0.025em;
+    font-size: clamp(30px, 8.6vw, 45px); /* ~14% smaller than before */
+    line-height: 1.08;
+    letter-spacing: -0.02em;
   }
+  .hero-names span { margin: 14px 0; }
 
   .hero-subtitle {
     max-width: 280px;
-    margin: 26px auto 0;
+    margin: 34px auto 0;
     line-height: 1.8;
     letter-spacing: 0.15em;
   }
@@ -994,8 +1020,9 @@ h2 i { color: var(--terracotta); }
   .map-link { grid-column: 2; margin-top: 8px; justify-self: start; }
   .gallery-heading { grid-template-columns: 1fr; gap: 18px; }
   .gallery-wall { margin-top: 42px; }
-  .gallery-wall.is-pair { gap: 10px; }
-  .is-pair .gallery-item-2 { margin-top: 36px; }
+  .gallery-wall.is-columns { gap: 10px; }
+  .gallery-col { gap: 22px; }
+  .gallery-col-2 { padding-top: 36px; }
   .gallery-frame::after { inset: 7px; }
   .gallery-caption { font-size: 18px; }
   .gallery-item figcaption { gap: 8px; margin-top: 10px; }
@@ -1022,5 +1049,20 @@ h2 i { color: var(--terracotta); }
 /* Short phones (e.g. iPhone SE): the kicker repeats the next section's eyebrow, so drop it here to keep faces clear */
 @media (max-height: 720px) {
   .hero-kicker { display: none; }
-  .hero-date-mark { margin-bottom: 20px; }
+  .hero-date-mark { margin-bottom: 28px; }
+  .hero-subtitle { margin-top: 26px; }
+  .hero-copy { margin-bottom: 96px; }
+}
+
+/* Very small screens (original iPhone SE): tighten rhythm so the scroll cue stays clear */
+@media (max-height: 600px) {
+  .hero-date-mark { margin-bottom: 22px; }
+  .hero-names span { margin: 10px 0; }
+  .hero-subtitle { margin-top: 20px; }
+}
+
+/* Notched phones: keep controls clear of the home indicator */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .hero-scroll { bottom: calc(31px + env(safe-area-inset-bottom)); }
+  .music-button { bottom: calc(18px + env(safe-area-inset-bottom)); }
 }

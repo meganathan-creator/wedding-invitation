@@ -39,26 +39,38 @@
     }
   ],
   "hero": {
-    "image": "/assets/photos/DM.jpeg",
+    "image": "/assets/photos/wedding-hero-mobile.jpeg",
     "overlay": 1,
     "showMusicButton": true
   },
   "gallery": {
-    "eyebrow": "TWO FRAMES",
-    "title": "Two frames before forever.",
-    "subtitle": "One of each of us, chosen with care. The rest of the story begins on the day.",
+    "eyebrow": "A FEW FRAMES",
+    "title": "A few frames before forever.",
+    "subtitle": "Her, him, and the two of us. A few favourite moments before the celebrations begin.",
     "photos": [
       {
-        "src": "/assets/photos/Meggi.jpeg",
-        "alt": "Meganathan D, the groom, smiling outdoors",
-        "caption": "Meganathan",
-        "position": "50% 50%"
+        "src": "/assets/photos/gallery/bride-red.jpeg",
+        "alt": "Thilagavathi smiling in a red embroidered churidar",
+        "caption": "Thilagavathi",
+        "position": "46% 30%"
       },
       {
-        "src": "/assets/photos/Deeppu.jpeg",
-        "alt": "Thilagavathi R, the bride, in a yellow and magenta silk saree",
-        "caption": "Thilagavathi",
-        "position": "50% 30%"
+        "src": "/assets/photos/gallery/groom-park.jpeg",
+        "alt": "Meganathan sitting outdoors in front of palms, wearing sunglasses",
+        "caption": "Meganathan",
+        "position": "50% 45%"
+      },
+      {
+        "src": "/assets/photos/gallery/engagement.jpeg",
+        "alt": "Thilagavathi in a pink silk saree and Meganathan holding hands at their engagement",
+        "caption": "The engagement",
+        "position": "50% 18%"
+      },
+      {
+        "src": "/assets/photos/gallery/couple-selfie.jpeg",
+        "alt": "Thilagavathi and Meganathan smiling together in a car selfie",
+        "caption": "Just us",
+        "position": "50% 35%"
       }
     ]
   },
