@@ -87,31 +87,43 @@ Set environment variable in Vercel project settings:
 
 ## RSVP storage and admin access
 
-RSVP is handled by serverless API route [api/rsvp.ts](api/rsvp.ts).
+RSVP is handled by the serverless API route [api/rsvp.ts](api/rsvp.ts).
 
-Draft behavior note:
-- In Vercel serverless, responses are stored in temporary runtime storage.
-- Data can reset on new deployments or cold starts.
-- This is fine for draft/demo sharing.
-- For production, use a database (Supabase/Firebase/etc.).
+### Durable storage (required before sharing with guests)
 
-Response viewing is admin-only:
-1. Set an environment variable before running dev server:
+Without a database, responses live in `/tmp` on one serverless instance and **will be lost** on cold starts and redeploys.
+Connect Upstash Redis (Vercel dashboard → Storage / Marketplace → Upstash Redis → connect to this project). That adds
+`KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`), which the API
+picks up automatically. The admin view shows a warning while storage is still temporary.
 
-```bash
-export RSVP_ADMIN_TOKEN="your-secret-key"
-npm run dev
-```
+### Admin access
 
-2. Open the site with admin mode query param:
+- Set `RSVP_ADMIN_TOKEN` in Vercel to a random secret of **at least 24 characters**
+  (e.g. `openssl rand -base64 32`). Shorter tokens are refused.
+- Open `https://<your-site>/?admin=1`, enter the key, and click VIEW RESPONSES.
+- `?admin=1` only reveals the form; the server checks the token on every request.
 
-```text
-http://localhost:5173/?admin=1
-```
+### Server-side protections
 
-3. In the RSVP section, enter the same admin key and click VIEW RESPONSES.
+- Attendance and guest count must match `rsvp.attendanceOptions` / `rsvp.guestOptions` in `wedding.json`
+- Name 2–80 characters, message ≤ 400, request body ≤ 4 KB, JSON only
+- Rate limits per IP: 5 RSVPs / 10 min, 10 admin attempts / 15 min (shared across instances when Redis is connected)
+- Honeypot field for simple bots; declines are stored with 0 guests
 
-Guests can submit RSVP normally, but cannot view responses without the admin token.
+## Calendar times
+
+Event times are Indian Standard Time. "Add to Google" and the `.ics` download are written as IST with an explicit
+`Asia/Kolkata` zone, so guests abroad see the correct local time and the event details still say IST.
+Order of precedence for an event's start: `startDateTime` → `dateLabel` + `time` → `countdownDate`.
+
+## Link previews (WhatsApp, iMessage, Telegram)
+
+The preview card is `public/assets/og/share.jpg` (1200×630, ~150 KB). `index.html` points to it with an absolute URL on
+`https://thilagavathi-meganathan-invite.vercel.app`; if you move to a custom domain, update `og:url`, `og:image`,
+`twitter:image` and `canonical` there.
+
+WhatsApp caches previews per link. If you've already shared the link, the old preview may stick for a while:
+share it with a harmless query string the first time (e.g. `…vercel.app/?v=2`) to force a fresh preview.
 
 ## Custom domain setup (Vercel)
 
@@ -124,23 +136,24 @@ Guests can submit RSVP normally, but cannot view responses without the admin tok
 
 After domain is active, update social meta URLs in [index.html](index.html) if you want fully qualified image links for some messaging apps.
 
-## Basic RSVP anti-spam
+## Palette
 
-Current RSVP endpoint includes:
-- hidden honeypot field to catch simple bots
-- per-IP cooldown (15 seconds) between submissions
-- input validation for name, guests and message length
+Defined once in `:root` in `src/styles.css`; everything else uses these tokens or `color-mix()` of them.
 
-This is suitable for draft sharing. For stronger production protection, add CAPTCHA and persistent database storage.
+| Token | Hex | Used for |
+| --- | --- | --- |
+| `--cream` | `#F7F1E8` | page background, the connecting colour |
+| `--cream-2` | `#EFE5D8` | RSVP section, photo placeholders |
+| `--ink` | `#33252E` | text, buttons, celebration gradient start |
+| `--burgundy` | `#5A3540` | celebration gradient end |
+| `--terracotta` | `#B96A56` | countdown, large accents on cream |
+| `--forest` | `#173D32` | hero base, footer, music button |
+| `--gold` | `#B89A61` | rules and underlines |
+| `--gold-soft` | `#E2CF9A` | accents on dark sections |
+| `--white` | `#FFF9F2` | text on dark sections |
 
+Derived: `--terracotta-deep` (small accent text on cream, 5.2:1), `--ink-muted` (body copy, 6.6:1), `--line`, `--on-dark-muted`.
 
-## High-contrast palette
+## Accessibility
 
-This edition uses a brighter modern wedding palette:
-- Warm porcelain: `#FBF7EF`
-- Deep plum-charcoal: `#241F24`
-- Terracotta: `#B96A56`
-- Soft rose: `#E8A18F`
-- Deep plum/burgundy: `#33252E` → `#5A3540`
-
-Supporting text, labels and form controls have been enlarged for better mobile readability.
+`prefers-reduced-motion: reduce` turns off parallax, reveal fades and slide-ins (Motion `MotionConfig` + `useReducedMotion`), as well as CSS animations.

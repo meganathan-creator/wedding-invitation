@@ -46,6 +46,7 @@ export function MusicButton({
       className={`music-button ${playing ? "" : "music-button-pulse"}`.trim()}
       onClick={toggle}
       aria-label="Toggle music"
+      aria-pressed={playing}
     >
       {showHint && !playing && <span className="music-hint">Tap for music</span>}
       <span className={`equalizer ${playing ? "playing" : ""}`}>

@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
 import type { WeddingConfig } from "../types/wedding";
 import { MusicButton } from "./MusicButton";
 
@@ -7,30 +7,19 @@ export function Hero({ config }: { config: WeddingConfig }) {
   const y = useTransform(scrollY, [0, 900], [0, 140]);
   const scale = useTransform(scrollY, [0, 900], [1.03, 1.14]);
   const opacity = useTransform(scrollY, [0, 500], [1, 0.15]);
+  // Scroll-linked styles aren't animations, so MotionConfig can't switch them off — do it here.
+  const reduceMotion = useReducedMotion();
   const { bride, groom } = config.couple;
   const heroEvent =
     config.events.find((event) => event.countdownDate) ??
     config.events.find((event) => /wedding/i.test(event.type)) ??
     config.events[0];
-  const totalSections =
-    config.hero.pageCount ??
-    (
-      1 + // hero
-      1 + // invitation
-      1 + // celebration
-      (heroEvent?.countdownDate ? 1 : 0) +
-      (config.gallery.photos.length ? 1 : 0) +
-      (config.rsvp.enabled ? 1 : 0) +
-      1 // footer
-    );
-
   return (
     <section className="hero">
       <motion.div
         className="hero-image"
         style={{
-          y,
-          scale,
+          ...(reduceMotion ? {} : { y, scale }),
           backgroundImage: `url("${config.hero.image}")`
         }}
       />
@@ -40,13 +29,12 @@ export function Hero({ config }: { config: WeddingConfig }) {
       />
 
       <div className="hero-top">
-        <span className="hero-index">01 / {String(totalSections).padStart(2, "0")}</span>
         {config.music.enabled && config.hero.showMusicButton !== false && (
           <MusicButton file={config.music.file} label={config.music.label} />
         )}
       </div>
 
-      <motion.div className="hero-copy" style={{ opacity }}>
+      <motion.div className="hero-copy" style={reduceMotion ? undefined : { opacity }}>
         <p className="hero-kicker">{config.invitation.eyebrow}</p>
 
         <div className="hero-date-mark">
@@ -67,7 +55,7 @@ export function Hero({ config }: { config: WeddingConfig }) {
       <button
         className="hero-scroll"
         onClick={() =>
-          document.querySelector("#invitation")?.scrollIntoView({ behavior: "smooth" })
+          document.querySelector("#invitation")?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" })
         }
         aria-label="Open wedding invitation"
       >

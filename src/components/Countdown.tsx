@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 
 function getTime(target: string) {
   const diff = new Date(target).getTime() - Date.now();
@@ -16,6 +16,7 @@ function getTime(target: string) {
 }
 
 export function Countdown({ target }: { target?: string }) {
+  const reduceMotion = useReducedMotion();
   const [time, setTime] = useState(() => target ? getTime(target) : getTime("1970-01-01"));
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export function Countdown({ target }: { target?: string }) {
     return (
       <motion.div
         className="countdown-finished"
-        initial={{ opacity: 0, y: 8 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
       >
@@ -44,7 +45,7 @@ export function Countdown({ target }: { target?: string }) {
         <motion.div
           className="countdown-cell"
           key={label}
-          initial={{ opacity: 0, y: 12 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: index * 0.07 }}

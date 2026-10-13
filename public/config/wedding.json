@@ -29,25 +29,37 @@
       "id": "wedding",
       "type": "Wedding Ceremony",
       "dateLabel": "13 November 2026",
-      "countdownDate": "2026-11-13T07:00:00+05:30",
+      "countdownDate": "2026-11-13T06:00:00+05:30",
       "time": "6:00 AM onwards",
       "venue": "Sri Nataraja Thirumana Mandapam",
       "address": "No. 490A, GNT Salai, Redhills, Chennai - 66",
+      "mapUrl": "https://maps.google.com/?cid=17950396045816606466",
       "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d62166.80950903308!2d80.1453387!3d13.135533!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a527b591a508273%3A0xf91c9e193079af02!2sSri%20Nataraja%20Thirumana%20Mandapam!5e0!3m2!1sen!2sin!4v1789389765609!5m2!1sen!2sin",
       "mapLabel": "OPEN IN GOOGLE MAPS"
     }
   ],
   "hero": {
     "image": "/assets/photos/DM.jpeg",
-    "overlay": 0.64,
+    "overlay": 1,
     "showMusicButton": true
   },
   "gallery": {
-    "title": "A few frames before forever.",
-    "subtitle": "A small collection of moments to remember, before the celebrations begin.",
+    "eyebrow": "TWO FRAMES",
+    "title": "Two frames before forever.",
+    "subtitle": "One of each of us, chosen with care. The rest of the story begins on the day.",
     "photos": [
-      "/assets/photos/Meggi.jpeg",
-      "/assets/photos/Deeppu.jpeg"
+      {
+        "src": "/assets/photos/Meggi.jpeg",
+        "alt": "Meganathan D, the groom, smiling outdoors",
+        "caption": "Meganathan",
+        "position": "50% 50%"
+      },
+      {
+        "src": "/assets/photos/Deeppu.jpeg",
+        "alt": "Thilagavathi R, the bride, in a yellow and magenta silk saree",
+        "caption": "Thilagavathi",
+        "position": "50% 30%"
+      }
     ]
   },
   "music": {

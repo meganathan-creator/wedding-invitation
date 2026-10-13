@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 
 export function Reveal({
@@ -10,6 +10,10 @@ export function Reveal({
   className?: string;
   delay?: number;
 }) {
+  // Reduced motion: render content in place immediately, no fade or slide.
+  const reduceMotion = useReducedMotion();
+  if (reduceMotion) return <div className={className}>{children}</div>;
+
   return (
     <motion.div
       className={className}

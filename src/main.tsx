@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { MotionConfig } from "motion/react";
 import App from "./App";
 import { loadWeddingConfig } from "./config";
 
@@ -19,7 +20,12 @@ function Root() {
     return <div className="loading">Loading invitation…</div>;
   }
 
-  return <App config={config} />;
+  // "user": Motion skips transform/layout animations when the OS asks for reduced motion.
+  return (
+    <MotionConfig reducedMotion="user">
+      <App config={config} />
+    </MotionConfig>
+  );
 }
 
 createRoot(document.getElementById("root")!).render(

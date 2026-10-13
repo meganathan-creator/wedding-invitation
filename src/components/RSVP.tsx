@@ -16,6 +16,32 @@ type RSVPResponse = RSVPResponsePayload & {
   createdAt: string;
 };
 
+/** Quote a CSV cell; neutralise values Excel/Sheets would run as formulas. */
+function csvCell(value: unknown) {
+  let text = String(value ?? "");
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+
+function downloadCsv(responses: RSVPResponse[]) {
+  const header = ["Name", "Attendance", "Guests", "Message", "Submitted (IST)"];
+  const rows = responses.map((r) => [
+    r.name,
+    r.attendance,
+    r.guests,
+    r.message,
+    new Date(r.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+  ]);
+  // BOM so Excel opens UTF-8 (Tamil names, emoji) correctly
+  const csv = "\uFEFF" + [header, ...rows].map((row) => row.map(csvCell).join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `rsvp-responses-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function RSVP({
   config,
 }: {
@@ -29,6 +55,7 @@ export function RSVP({
   const [loadingResponses, setLoadingResponses] = useState(false);
   const [responsesError, setResponsesError] = useState("");
   const [adminToken, setAdminToken] = useState("");
+  const [storageWarning, setStorageWarning] = useState(false);
 
   const isAdminMode =
     typeof window !== "undefined" &&
@@ -38,9 +65,12 @@ export function RSVP({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting) return;
     setError("");
 
-    const form = new FormData(event.currentTarget);
+    // Capture the element now: React clears event.currentTarget after the first await.
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const payload: RSVPResponsePayload = {
       name: String(form.get("name") ?? "").trim(),
       attendance: String(form.get("attendance") ?? ""),
@@ -60,13 +90,18 @@ export function RSVP({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit RSVP.");
+        const data = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error || "We could not send your RSVP right now. Please try again.");
       }
 
+      formElement.reset();
       setSent(true);
-      event.currentTarget.reset();
-    } catch {
-      setError("We could not send your RSVP right now. Please try again.");
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error && submitError.message
+          ? submitError.message
+          : "We could not send your RSVP right now. Please try again."
+      );
     } finally {
       setSubmitting(false);
     }
@@ -94,12 +129,16 @@ export function RSVP({
           throw new Error("Invalid admin access key.");
         }
         if (response.status === 503) {
-          throw new Error("Admin access key is not configured on server.");
+          throw new Error("Admin access key is not configured on the server (needs 24+ characters).");
+        }
+        if (response.status === 429) {
+          throw new Error("Too many attempts. Please wait a few minutes.");
         }
         throw new Error("Failed to fetch responses.");
       }
 
-      const data = (await response.json()) as { responses?: RSVPResponse[] };
+      const data = (await response.json()) as { responses?: RSVPResponse[]; storage?: string };
+      setStorageWarning(data.storage === "ephemeral");
       setResponses(Array.isArray(data.responses) ? data.responses : []);
     } catch (fetchError) {
       setResponsesError(
@@ -143,7 +182,14 @@ export function RSVP({
 
             <label>
               Your name
-              <input required name="name" placeholder="Enter your name" />
+              <input
+                required
+                name="name"
+                minLength={2}
+                maxLength={80}
+                autoComplete="name"
+                placeholder="Enter your name"
+              />
             </label>
 
             <label>
@@ -167,14 +213,19 @@ export function RSVP({
 
             <label>
               Message
-              <textarea name="message" rows={3} placeholder="Leave a little love..." />
+              <textarea
+                name="message"
+                rows={3}
+                maxLength={400}
+                placeholder="Leave a little love..."
+              />
             </label>
 
-            <button className="primary-button" type="submit">
+            <button className="primary-button" type="submit" disabled={submitting}>
               {submitting ? "SENDING..." : "SEND RSVP"} <span>→</span>
             </button>
 
-            {error && <p className="rsvp-error">{error}</p>}
+            {error && <p className="rsvp-error" role="alert">{error}</p>}
           </form>
         )}
 
@@ -199,9 +250,24 @@ export function RSVP({
             {showResponses && (
               <div className="rsvp-responses">
                 <h3>RSVP Responses</h3>
+                {storageWarning && (
+                  <p className="rsvp-error">
+                    Temporary storage: responses can disappear on redeploys or cold starts.
+                    Connect Upstash Redis before sharing the invitation.
+                  </p>
+                )}
                 {responsesError && <p className="rsvp-error">{responsesError}</p>}
                 {!responsesError && !loadingResponses && responses.length === 0 && (
                   <p className="rsvp-empty">No responses yet.</p>
+                )}
+                {!responsesError && responses.length > 0 && (
+                  <p className="rsvp-summary">
+                    {responses.length} {responses.length === 1 ? "response" : "responses"} ·{" "}
+                    {responses.reduce((sum, r) => sum + (Number(r.guests) || 0), 0)} guests attending
+                    <button className="text-button" type="button" onClick={() => downloadCsv(responses)}>
+                      DOWNLOAD CSV
+                    </button>
+                  </p>
                 )}
                 {!responsesError && responses.length > 0 && (
                   <div className="rsvp-table-wrap">
@@ -222,7 +288,7 @@ export function RSVP({
                             <td>{entry.attendance}</td>
                             <td>{entry.guests}</td>
                             <td>{entry.message || "-"}</td>
-                            <td>{new Date(entry.createdAt).toLocaleString()}</td>
+                            <td>{new Date(entry.createdAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}</td>
                           </tr>
                         ))}
                       </tbody>

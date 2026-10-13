@@ -30,6 +30,8 @@ export type GalleryPhoto =
       src: string;
       alt?: string;
       caption?: string;
+      /** CSS object-position focal point for the crop, e.g. "50% 30%" */
+      position?: string;
     };
 
 export type WeddingConfig = {
@@ -47,9 +49,9 @@ export type WeddingConfig = {
     image: string;
     overlay?: number;
     showMusicButton?: boolean;
-    pageCount?: number;
   };
   gallery: {
+    eyebrow?: string;
     title: string;
     subtitle: string;
     photos: GalleryPhoto[];
