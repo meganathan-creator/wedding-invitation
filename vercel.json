@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/rsvp.ts": {
+      "includeFiles": "public/config/wedding.json"
+    }
+  }
+}

@@ -134,7 +134,7 @@ export function RSVP({
         if (response.status === 429) {
           throw new Error("Too many attempts. Please wait a few minutes.");
         }
-        throw new Error("Failed to fetch responses.");
+        throw new Error(`Could not load responses (server error ${response.status}). Check the Vercel function logs.`);
       }
 
       const data = (await response.json()) as { responses?: RSVPResponse[]; storage?: string };

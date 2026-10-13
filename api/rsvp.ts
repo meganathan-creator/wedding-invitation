@@ -1,17 +1,44 @@
 /// <reference types="node" />
 
-import { promises as fs } from "node:fs";
+import { promises as fs, readFileSync } from "node:fs";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import path from "node:path";
-// Single source of truth: the server accepts exactly the options the form offers.
-import weddingConfig from "../public/config/wedding.json";
 
 /* ------------------------------------------------------------------ */
 /* Limits                                                              */
 /* ------------------------------------------------------------------ */
 
-const ATTENDANCE_OPTIONS: readonly string[] = weddingConfig.rsvp.attendanceOptions;
-const GUEST_OPTIONS: readonly number[] = weddingConfig.rsvp.guestOptions;
+/**
+ * Single source of truth: the server accepts exactly the options the form offers.
+ * Read at runtime (not `import … from "*.json"`, which crashes Node ESM on Vercel
+ * without an import attribute). vercel.json `includeFiles` ships the file with the
+ * function; the defaults below only apply if it ever can't be read.
+ */
+function loadRsvpOptions(): { attendanceOptions: string[]; guestOptions: number[] } {
+  const defaults = {
+    attendanceOptions: ["Joyfully attending", "Regretfully declining"],
+    guestOptions: [1, 2, 3, 4],
+  };
+  try {
+    const file = path.join(process.cwd(), "public", "config", "wedding.json");
+    const rsvp = JSON.parse(readFileSync(file, "utf8"))?.rsvp ?? {};
+    const attendanceOptions = Array.isArray(rsvp.attendanceOptions)
+      ? rsvp.attendanceOptions.filter((o: unknown): o is string => typeof o === "string")
+      : [];
+    const guestOptions = Array.isArray(rsvp.guestOptions)
+      ? rsvp.guestOptions.filter((n: unknown): n is number => Number.isInteger(n))
+      : [];
+    return {
+      attendanceOptions: attendanceOptions.length ? attendanceOptions : defaults.attendanceOptions,
+      guestOptions: guestOptions.length ? guestOptions : defaults.guestOptions,
+    };
+  } catch (error) {
+    console.warn("RSVP: could not read public/config/wedding.json, using defaults", error);
+    return defaults;
+  }
+}
+
+const { attendanceOptions: ATTENDANCE_OPTIONS, guestOptions: GUEST_OPTIONS } = loadRsvpOptions();
 const DECLINE_OPTION = ATTENDANCE_OPTIONS.find((option) => /declin|regret|not/i.test(option));
 
 const NAME_MIN = 2;
