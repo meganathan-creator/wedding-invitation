@@ -60,6 +60,21 @@ export function EventCard({
   const reduceMotion = useReducedMotion();
   const calendar = getCalendarLinks(event, coupleNames, fallbackLocation);
 
+  const downloadIcs = () => {
+    if (!calendar) return;
+    const blob = new Blob([calendar.ics + "\r\n"], {
+      type: "text/calendar;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${event.id}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <motion.article
       className={`event-card ${index === 0 ? "event-card-main" : ""}`.trim()}
@@ -93,7 +108,13 @@ export function EventCard({
             <a href={calendar.googleUrl} target="_blank" rel="noreferrer">
               ADD TO GOOGLE
             </a>
-            <a href={calendar.icsUrl} download={`${event.id}.ics`}>
+            <a
+              href="#"
+              onClick={(clickEvent) => {
+                clickEvent.preventDefault();
+                downloadIcs();
+              }}
+            >
               ADD TO APPLE/OUTLOOK
             </a>
           </div>

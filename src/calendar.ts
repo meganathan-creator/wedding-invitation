@@ -140,8 +140,9 @@ export function getCalendarLinks(
     "BEGIN:VEVENT",
     `UID:${event.id}-${formatIstLocal(start)}@wedding-invitation`,
     `DTSTAMP:${formatUtc(new Date())}`,
-    `DTSTART;TZID=${EVENT_TIME_ZONE}:${formatIstLocal(start)}`,
-    `DTEND;TZID=${EVENT_TIME_ZONE}:${formatIstLocal(end)}`,
+    // UTC DTSTART/DTEND are broadly supported by Apple Calendar and Outlook.
+    `DTSTART:${formatUtc(start)}`,
+    `DTEND:${formatUtc(end)}`,
     `SUMMARY:${escapeIcsText(title)}`,
     `DESCRIPTION:${escapeIcsText(details)}`,
     ...(location ? [`LOCATION:${escapeIcsText(location)}`] : []),
@@ -153,7 +154,6 @@ export function getCalendarLinks(
 
   return {
     googleUrl: google.toString(),
-    icsUrl: `data:text/calendar;charset=utf-8,${encodeURIComponent(ics + "\r\n")}`,
     ics,
   };
 }
