@@ -12,6 +12,7 @@ export default function App({ config }: { config: WeddingConfig }) {
   const { bride, groom } = config.couple;
   const reduceMotion = useReducedMotion();
   const coupleNames = `${bride.name} & ${groom.name}`;
+  const invitationEyebrow = config.invitation.sectionEyebrow ?? config.invitation.eyebrow;
   const primaryEvent =
     config.events.find((event) => event.countdownDate) ??
     config.events.find((event) => event.venue) ??
@@ -44,7 +45,7 @@ export default function App({ config }: { config: WeddingConfig }) {
       <section id="invitation" className="invitation-section">
         <div className="container invitation-inner">
           <Reveal className="invitation-copy">
-            <p className="eyebrow">{config.invitation.eyebrow}</p>
+            {invitationEyebrow && <p className="eyebrow">{invitationEyebrow}</p>}
             <h2>{config.invitation.introTitle}</h2>
             <p className="lead">{config.invitation.introText}</p>
           </Reveal>

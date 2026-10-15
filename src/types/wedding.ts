@@ -41,6 +41,8 @@ export type WeddingConfig = {
   };
   invitation: {
     eyebrow: string;
+    heroEyebrow?: string;
+    sectionEyebrow?: string;
     introTitle: string;
     introText: string;
   };

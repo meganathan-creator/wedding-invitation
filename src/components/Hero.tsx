@@ -10,6 +10,7 @@ export function Hero({ config }: { config: WeddingConfig }) {
   // Scroll-linked styles aren't animations, so MotionConfig can't switch them off — do it here.
   const reduceMotion = useReducedMotion();
   const { bride, groom } = config.couple;
+  const heroEyebrow = config.invitation.heroEyebrow ?? config.invitation.eyebrow;
   const heroEvent =
     config.events.find((event) => event.countdownDate) ??
     config.events.find((event) => /wedding/i.test(event.type)) ??
@@ -35,7 +36,7 @@ export function Hero({ config }: { config: WeddingConfig }) {
       </div>
 
       <motion.div className="hero-copy" style={reduceMotion ? undefined : { opacity }}>
-        <p className="hero-kicker">{config.invitation.eyebrow}</p>
+        {heroEyebrow && <p className="hero-kicker">{heroEyebrow}</p>}
 
         <div className="hero-date-mark">
           <span>{heroEvent?.dateLabel?.split(" ")[1] ?? ""}</span>
